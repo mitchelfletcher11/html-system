@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%%TITLE%%</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-y:auto;background:#0A0A0A}
+body{background:#0A0A0A;color:#F5F2EE;font-family:'DM Mono',monospace;
+  display:flex;flex-direction:column;
+  padding:clamp(6px,0.9vh,12px) clamp(12px,2vw,32px) clamp(8px,1vh,16px);
+  gap:clamp(4px,0.5vh,8px)}
+body>*{min-height:0}
+svg.diagram{width:100%;height:auto;display:block;overflow:visible}
+
+.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:clamp(3px,0.4vh,6px);flex-shrink:0}
+.logo-title{font-family:'Syne',sans-serif;font-size:clamp(14px,1.9vw,26px);font-weight:800;letter-spacing:-.02em}
+.kpis{display:flex;gap:clamp(4px,0.6vw,10px);align-items:center}
+.kpi{background:#141414;border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:clamp(2px,0.3vh,5px) clamp(6px,0.7vw,11px);display:flex;flex-direction:column;align-items:center}
+.kpi-v{font-family:'Syne',sans-serif;font-size:clamp(11px,1.3vw,18px);font-weight:800}
+.kpi-l{font-size:clamp(5.5px,0.62vw,7.5px);color:#555;letter-spacing:.12em;text-transform:uppercase}
+
+.legend{display:flex;gap:clamp(10px,1.6vw,26px);align-items:center;padding:clamp(2px,0.3vh,5px) 0;flex-shrink:0}
+.legend span{display:flex;align-items:center;gap:5px;font-size:clamp(6.5px,0.72vw,9px);color:#666}
+.legend i{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+.sg{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:clamp(3px,0.45vh,6px);height:clamp(80px,10vh,130px);min-height:0;flex-shrink:0}
+.sp{background:#141414;border:1px solid rgba(255,255,255,.06);border-radius:5px;padding:clamp(4px,0.55vh,7px) clamp(6px,0.7vw,10px);overflow:hidden;display:flex;flex-direction:column;gap:clamp(1px,0.16vh,2px);opacity:0}
+.sp-h{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(6px,0.72vh,9.5px);color:#444;letter-spacing:.18em;text-transform:uppercase;margin-bottom:clamp(1px,0.18vh,3px);flex-shrink:0}
+.sp-row{display:flex;gap:5px;align-items:flex-start;flex-shrink:0;line-height:1.3;margin-bottom:clamp(0px,0.1vh,1px)}
+.sp-dot{width:5px;height:5px;min-width:5px;border-radius:50%;margin-top:2px}
+.sp-note{font-size:clamp(4.5px,0.54vh,7px);color:#444;margin-top:auto;padding-top:clamp(1px,0.16vh,2px);border-top:1px solid rgba(255,255,255,.04);flex-shrink:0}
+
+.vocab-wrap{flex-shrink:0}
+.vocab-label{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(6px,0.72vh,9.5px);color:#444;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+.vocab-grid{display:flex;flex-wrap:wrap;gap:8px}
+.vocab-card{background:#141414;border:1px solid rgba(255,255,255,.06);border-radius:5px;padding:8px 10px;flex:0 0 auto;max-width:260px}
+.vocab-name{font-family:'Syne',sans-serif;font-weight:800;font-size:8.5px;color:#F97316;margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.vocab-def{font-size:7px;color:#555;line-height:1.5;margin-bottom:4px}
+.vocab-nodes{font-size:6.5px;color:#333}
+
+footer{display:flex;align-items:center;justify-content:center;border-top:1px solid rgba(255,255,255,.05);padding-top:clamp(2px,0.3vh,5px);flex-shrink:0}
+.footer-layers{display:flex;flex-direction:column;align-items:center;gap:3px}
+.footer-layers-label{font-family:'DM Mono',monospace;font-size:clamp(4.5px,0.52vw,6px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#333}
+.footer-layers-chips{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.fl-chip{font-family:'DM Mono',monospace;font-size:clamp(5px,0.55vw,6.5px);color:#444;background:#141414;border:1px solid rgba(255,255,255,.05);border-radius:3px;padding:1px 5px;white-space:nowrap}
+.fl-chip-count{color:#2e2e2e;margin-left:3px}
+
+.sidebar{position:fixed;right:0;top:0;height:100%;width:340px;background:#111;border-left:1px solid rgba(255,255,255,.08);padding:20px 18px 40px;overflow-y:auto;transform:translateX(100%);transition:transform .28s ease;z-index:200}
+.sidebar.sb-open{transform:translateX(0)}
+.sb-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;font-family:'DM Mono',monospace;line-height:1;padding:0}
+.sb-close:hover{color:#F5F2EE}
+.sb-label{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:5px;margin-top:4px;padding-right:32px;line-height:1.2}
+.sb-tag{display:inline-block;font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:14px}
+.sb-field{margin-bottom:11px;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:9px}
+.sb-field:last-child{border-bottom:none;margin-bottom:0}
+.sb-ft{font-family:'DM Mono',monospace;font-size:7px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#555;margin-bottom:4px}
+.sb-fb{font-size:8px;line-height:1.65;color:#666}
+.sb-analogy{color:#333;font-style:italic}
+.sb-design-name{font-family:'DM Mono',monospace;font-weight:700;font-size:7px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
+.sb-design-def{font-size:7.5px;color:#555;line-height:1.55;margin-bottom:2px}
+.sb-dep-row{margin-bottom:7px}
+.sb-dep-node{font-family:'Syne',sans-serif;font-weight:700;font-size:9px}
+.sb-dep-why{font-size:7px;color:#555;line-height:1.55;margin-top:2px}
+.sb-dep-lbl{font-size:6.5px;color:#2e2e2e;margin-top:1px}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:199;pointer-events:none}
+.nd{cursor:pointer}.nd:hover rect.nd-rect{stroke-opacity:.9!important}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo-title">%%TITLE%%</div>
+  <div class="kpis" id="kpi-row"></div>
+</div>
+
+<div class="legend">
+  <span><i style="background:#8B5CF6"></i>you — action required</span>
+  <span><i style="background:#D4A017"></i>automated pipeline</span>
+  <span><i style="background:#4CAF50"></i>stored to disk</span>
+</div>
+
+<svg width="0" height="0" style="position:absolute;overflow:hidden">
+<defs>
+  <marker id="af"  markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L0,4 L6,2 z" fill="rgba(139,92,246,.9)"/></marker>
+  <marker id="agf" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L0,4 L6,2 z" fill="rgba(212,160,23,.9)"/></marker>
+  <marker id="agr" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L0,4 L6,2 z" fill="rgba(76,175,80,.9)"/></marker>
+  <filter id="gR" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="gs" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+</svg>
+
+<svg id="diagram" class="diagram"></svg>
+
+<div class="sg" id="stats-grid"></div>
+
+
+<div class="sidebar" id="sidebar">
+  <button class="sb-close" id="sb-close">×</button>
+  <div id="sb-content"></div>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+/* ── Injected data ─────────────────────────────────────── */
+const NODES    = %%NODES%%;
+const EDGES    = %%EDGES%%;
+const SECTIONS = %%SECTIONS%%;
+
+/* ── Constants ─────────────────────────────────────────── */
+const NS   = 'http://www.w3.org/2000/svg';
+const COL  = { purple:'#8B5CF6', gold:'#D4A017', green:'#4CAF50' };
+const MKR  = { purple:'url(#af)', gold:'url(#agf)', green:'url(#agr)' };
+const NW   = 190, NH = 48;
+
+function col(c){ return COL[c]||COL.gold; }
+function mkr(c){ return MKR[c]||MKR.gold; }
+function byId(id){ return NODES.find(n=>n.id===id); }
+
+/* ── Extensible layout registry ────────────────────────── */
+/* To add a new layout: registerLayout('name', fn) where fn(section, nodeSpecs, g) */
+/* computes and returns { id: {x,y} } overrides for nodes in that section.         */
+/* Dagre handles all standard topologies automatically — extend only when needed.  */
+const LAYOUT_REGISTRY = {};
+function registerLayout(name, fn){ LAYOUT_REGISTRY[name] = fn; }
+
+/* ── Dagre layout ──────────────────────────────────────── */
+function computeLayout(){
+  if(typeof dagre==='undefined') return null;
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir:'TB', nodesep:80, ranksep:100, marginx:60, marginy:60 });
+  g.setDefaultEdgeLabel(()=>({}));
+  NODES.forEach(n => g.setNode(n.id, { width:NW, height:NH, label:n.label }));
+  EDGES.forEach(e => { try{ g.setEdge(e.from, e.to, { label:e.label||'' }); }catch(_){} });
+  dagre.layout(g);
+  return g;
+}
+
+/* ── SVG rendering ─────────────────────────────────────── */
+function renderDiagram(g){
+  const svg = document.getElementById('diagram');
+
+  if(!g){
+    svg.setAttribute('viewBox','0 0 640 80');
+    const t = document.createElementNS(NS,'text');
+    t.setAttribute('x','20'); t.setAttribute('y','48');
+    t.setAttribute('fill','#444'); t.setAttribute('font-family','DM Mono,monospace');
+    t.setAttribute('font-size','13');
+    t.textContent = 'Dagre layout unavailable — check network connection';
+    svg.appendChild(t);
+    return;
+  }
+
+  // ViewBox from node bounding box
+  let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+  NODES.forEach(n=>{
+    const nd=g.node(n.id); if(!nd) return;
+    x0=Math.min(x0, nd.x-nd.width/2);  y0=Math.min(y0, nd.y-nd.height/2);
+    x1=Math.max(x1, nd.x+nd.width/2);  y1=Math.max(y1, nd.y+nd.height/2);
+  });
+  const pad=50;
+  const rawW=x1-x0+pad*2, rawH=y1-y0+pad*2;
+  const MIN_W=1930, MIN_H=1280;
+  const w=Math.max(rawW,MIN_W), h=Math.max(rawH,MIN_H);
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  svg.setAttribute('viewBox',`${cx-w/2} ${cy-h/2} ${w} ${h}`);
+
+  // Section backgrounds
+  SECTIONS.forEach(sec=>{
+    const sn=(sec.nodes||[]).map(id=>g.node(id)).filter(Boolean);
+    if(!sn.length) return;
+    const xs=sn.flatMap(n=>[n.x-n.width/2,  n.x+n.width/2]);
+    const ys=sn.flatMap(n=>[n.y-n.height/2, n.y+n.height/2]);
+    const sx=Math.min(...xs)-18, sy=Math.min(...ys)-26;
+    const sw=Math.max(...xs)-sx-18+36, sh=Math.max(...ys)-sy-26+44;
+
+    const bg=document.createElementNS(NS,'rect');
+    bg.setAttribute('x',sx); bg.setAttribute('y',sy);
+    bg.setAttribute('width',sw); bg.setAttribute('height',sh);
+    bg.setAttribute('rx','10');
+    bg.setAttribute('fill','rgba(255,255,255,.015)');
+    bg.setAttribute('stroke','rgba(255,255,255,.045)');
+    bg.setAttribute('stroke-width','1');
+    svg.appendChild(bg);
+
+    const lbl=document.createElementNS(NS,'text');
+    lbl.setAttribute('x',sx+11); lbl.setAttribute('y',sy+15);
+    lbl.setAttribute('font-family','DM Mono,monospace');
+    lbl.setAttribute('font-size','7'); lbl.setAttribute('fill','rgba(255,255,255,.2)');
+    lbl.setAttribute('letter-spacing','0.12em');
+    lbl.textContent=(sec.label||sec.id).toUpperCase();
+    svg.appendChild(lbl);
+  });
+
+  // Edges
+  EDGES.forEach(e=>{
+    let pts;
+    try{ pts=g.edge({v:e.from,w:e.to}).points; }catch(_){ return; }
+    if(!pts||!pts.length) return;
+    const src=byId(e.from);
+    const c=col(src?.color);
+
+    const d=pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const path=document.createElementNS(NS,'path');
+    path.setAttribute('id',`ep-${e.from}-${e.to}`);
+    path.setAttribute('d',d);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke',c);
+    path.setAttribute('stroke-opacity','.42');
+    path.setAttribute('stroke-width','1.4');
+    path.setAttribute('stroke-dasharray','5,4');
+    path.setAttribute('marker-end',mkr(src?.color));
+    path.classList.add('conn'); path.style.opacity=0;
+    svg.appendChild(path);
+
+    if(e.label){
+      const mid=pts[Math.floor(pts.length/2)];
+      const lt=document.createElementNS(NS,'text');
+      lt.setAttribute('x',mid.x.toFixed(1));
+      lt.setAttribute('y',(mid.y-8).toFixed(1));
+      lt.setAttribute('text-anchor','middle');
+      lt.setAttribute('font-family','DM Mono,monospace');
+      lt.setAttribute('font-size','7.5');
+      lt.setAttribute('fill','#282828');
+      lt.classList.add('conn'); lt.style.opacity=0;
+      lt.textContent=e.label;
+      svg.appendChild(lt);
+    }
+  });
+
+  // Nodes
+  NODES.forEach(n=>{
+    const nd=g.node(n.id); if(!nd) return;
+    const c=col(n.color);
+    const nx=nd.x-nd.width/2, ny=nd.y-nd.height/2;
+
+    const grp=document.createElementNS(NS,'g');
+    grp.classList.add('nd'); grp.style.opacity=0;
+    grp.addEventListener('click',()=>openSidebar(n.id));
+
+    // Ambient glow
+    const glow=document.createElementNS(NS,'rect');
+    glow.setAttribute('x',nx-5); glow.setAttribute('y',ny-5);
+    glow.setAttribute('width',nd.width+10); glow.setAttribute('height',nd.height+10);
+    glow.setAttribute('rx','12'); glow.setAttribute('fill',c);
+    glow.setAttribute('opacity','0.03'); glow.setAttribute('filter','url(#gs)');
+    grp.appendChild(glow);
+
+    // Border rect
+    const rect=document.createElementNS(NS,'rect');
+    rect.setAttribute('class','nd-rect');
+    rect.setAttribute('x',nx); rect.setAttribute('y',ny);
+    rect.setAttribute('width',nd.width); rect.setAttribute('height',nd.height);
+    rect.setAttribute('rx','7'); rect.setAttribute('fill','#141414');
+    rect.setAttribute('stroke',c); rect.setAttribute('stroke-width','1.4');
+    rect.setAttribute('stroke-opacity','.55');
+    grp.appendChild(rect);
+
+    // Role indicator dot
+    const dot=document.createElementNS(NS,'circle');
+    dot.setAttribute('cx',nx+10); dot.setAttribute('cy',nd.y);
+    dot.setAttribute('r','3'); dot.setAttribute('fill',c); dot.setAttribute('opacity','.6');
+    grp.appendChild(dot);
+
+    // Label
+    const label=document.createElementNS(NS,'text');
+    label.setAttribute('x',nd.x+5); label.setAttribute('y',nd.y+4);
+    label.setAttribute('text-anchor','middle');
+    label.setAttribute('font-family','Syne,sans-serif');
+    label.setAttribute('font-size','11'); label.setAttribute('font-weight','700');
+    label.setAttribute('fill','#F5F2EE');
+    label.textContent=n.label;
+    grp.appendChild(label);
+
+    svg.appendChild(grp);
+  });
+
+  // Traveling dot
+  const tdot=document.createElementNS(NS,'circle');
+  tdot.setAttribute('id','tdot'); tdot.setAttribute('r','5');
+  tdot.setAttribute('fill','#D4A017'); tdot.style.opacity=0;
+  tdot.setAttribute('filter','url(#gR)');
+  svg.appendChild(tdot);
+}
+
+/* ── Sidebar ───────────────────────────────────────────── */
+function field(title, body, color){
+  if(!body) return '';
+  return `<div class="sb-field"><div class="sb-ft">${title}</div><div class="sb-fb" style="color:${color||'#666'}">${body}</div></div>`;
+}
+function fieldDesign(title, text, accent){
+  if(!text) return '';
+  const di=text.indexOf(' — ');
+  const name=di>-1?text.slice(0,di):text;
+  const def=di>-1?text.slice(di+3):'';
+  return `<div class="sb-field"><div class="sb-ft">${title}</div><div class="sb-design-name" style="color:${accent}">${name}</div>${def?`<div class="sb-design-def">${def}</div>`:''}</div>`;
+}
+function fieldDeps(title, edges, dir){
+  if(!edges.length) return '';
+  const rows=edges.map(e=>{
+    const otherId=dir==='from'?e.from:e.to;
+    const other=byId(otherId);
+    return `<div class="sb-dep-row">
+      <span class="sb-dep-node" style="color:${col(other?.color)}">${other?.label||otherId}</span>
+      ${e.dependency?`<div class="sb-dep-why">${e.dependency}</div>`:''}
+      ${e.label?`<div class="sb-dep-lbl">"${e.label}"</div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="sb-field"><div class="sb-ft">${title}</div>${rows}</div>`;
+}
+
+function openSidebar(nodeId){
+  const spec=byId(nodeId); if(!spec) return;
+  const c=col(spec.color);
+  const incoming=EDGES.filter(e=>e.to===nodeId);
+  const outgoing=EDGES.filter(e=>e.from===nodeId);
+  document.getElementById('sb-content').innerHTML=`
+    <div class="sb-label" style="color:${c}">${spec.label}</div>
+    <div class="sb-tag" style="background:${c}22;color:${c}">${spec.color.toUpperCase()}</div>
+    ${field('WHAT IT IS',        spec.is,       '#777')}
+    ${field('HOW IT WORKS',      spec.works,    '#666')}
+    ${field('WITHOUT THIS',      spec.without,  '#666')}
+    ${field('CONSTRAINT',        spec.constraint,'#555')}
+    ${spec.analogy?`<div class="sb-field"><div class="sb-ft">ANALOGY</div><div class="sb-fb sb-analogy">${spec.analogy}</div></div>`:''}
+    ${fieldDesign('DESIGN PATTERN',      spec.pattern,     '#8B5CF6')}
+    ${fieldDesign('DESIGN PRINCIPLE',    spec.principle,   '#4CAF50')}
+    ${fieldDesign('SEAM',                spec.seam,        '#06B6D4')}
+    ${fieldDesign('TRADEOFF',            spec.tradeoff,    '#F59E0B')}
+    ${fieldDesign('INTEGRATION PATTERN',            spec.integration,            '#F97316')}
+    ${fieldDesign('SALESFORCE INTEGRATION PATTERN', spec.salesforce_integration, '#00A1E0')}
+    ${fieldDeps('RECEIVES FROM', incoming, 'from')}
+    ${fieldDeps('SENDS TO',      outgoing, 'to')}
+  `;
+  document.getElementById('sidebar').classList.add('sb-open');
+  document.getElementById('overlay').style.display='block';
+}
+
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('sb-open');
+  document.getElementById('overlay').style.display='none';
+}
+
+/* ── Design vocabulary panel ───────────────────────────── */
+function renderVocab(){
+  const patterns={};
+  NODES.forEach(n=>{
+    if(!n.integration) return;
+    const di=n.integration.indexOf(' — ');
+    const name=di>-1?n.integration.slice(0,di):n.integration;
+    const def=di>-1?n.integration.slice(di+3):'';
+    if(!patterns[name]) patterns[name]={def,nodes:[]};
+    patterns[name].nodes.push(n.label);
+  });
+  const keys=Object.keys(patterns);
+  const wrap=document.getElementById('vocab');
+  if(!keys.length){ wrap.style.display='none'; return; }
+  wrap.innerHTML=`
+    <div class="vocab-label">Integration Patterns in This System</div>
+    <div class="vocab-grid">${keys.map(name=>`
+      <div class="vocab-card">
+        <div class="vocab-name">${name}</div>
+        <div class="vocab-def">${patterns[name].def}</div>
+        <div class="vocab-nodes">Used by: ${patterns[name].nodes.join(', ')}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+/* ── Stats grid ────────────────────────────────────────── */
+function renderStats(){
+  const you=NODES.filter(n=>n.color==='purple').length;
+  const pipe=NODES.filter(n=>n.color==='gold').length;
+  const stored=NODES.filter(n=>n.color==='green').length;
+  const seams=NODES.filter(n=>n.seam);
+  const row=(c,t)=>`<div class="sp-row"><div class="sp-dot" style="background:${c}"></div><div style="font-size:clamp(5px,0.6vh,7.5px);color:#555">${t}</div></div>`;
+  const layerChips=SECTIONS.map(s=>`<div class="fl-chip">${s.label}<span class="fl-chip-count">${s.nodes.length}</span></div>`).join('');
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="sp">
+      <div class="sp-h">Nodes by Role</div>
+      ${row('#8B5CF6',`${you} YOU — human action required`)}
+      ${row('#D4A017',`${pipe} PIPELINE — automated`)}
+      ${row('#4CAF50',`${stored} STORED — persists to disk`)}
+      <div class="sp-note">${NODES.length} total · ${EDGES.length} connections</div>
+    </div>
+    <div class="sp">
+      <div class="sp-h">Layers</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">${layerChips}</div>
+      <div class="sp-note">${SECTIONS.length} layer${SECTIONS.length!==1?'s':''}</div>
+    </div>
+    <div class="sp">
+      <div class="sp-h">Seams</div>
+      ${seams.slice(0,4).map(n=>row(col(n.color),n.label)).join('')}
+      <div class="sp-note">${seams.length} swap point${seams.length!==1?'s':''} — click node to see replacement</div>
+    </div>`;
+}
+
+/* ── KPI chips ─────────────────────────────────────────── */
+function renderKPIs(){
+  const you=NODES.filter(n=>n.color==='purple').length;
+  const pipe=NODES.filter(n=>n.color==='gold').length;
+  const stored=NODES.filter(n=>n.color==='green').length;
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi"><span class="kpi-v" style="color:#8B5CF6">${you}</span><span class="kpi-l">you</span></div>
+    <div class="kpi"><span class="kpi-v" style="color:#D4A017">${pipe}</span><span class="kpi-l">pipeline</span></div>
+    <div class="kpi"><span class="kpi-v" style="color:#4CAF50">${stored}</span><span class="kpi-l">stored</span></div>`;
+}
+
+/* ── Traveling dot — token system: each node fires once ─── */
+/* Fan-out: spawns one dot per branch, all travel in parallel */
+/* Fan-in:  second dot to arrive fades out (node already fired) */
+function startDot(g){
+  if(!g||typeof dagre==='undefined'||typeof anime==='undefined') return;
+
+  const hasIncoming=new Set((g.edges()||[]).map(e=>e.w));
+  let roots=g.nodes().filter(id=>!hasIncoming.has(id));
+  if(!roots.length){
+    // Fully cyclic graph — start from first purple (human) node, or first node
+    const firstPurple=NODES.find(n=>n.color==='purple');
+    roots=firstPurple?[firstPurple.id]:[g.nodes()[0]];
+  }
+
+  const svg=document.getElementById('diagram');
+  let dotN=0;
+
+  function mkDot(x,y,op){
+    const id=`tdot-${dotN++}`;
+    const el=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('id',id);el.setAttribute('r','5');
+    el.setAttribute('fill','#D4A017');
+    el.setAttribute('cx',x);el.setAttribute('cy',y);
+    el.style.opacity=op;el.setAttribute('filter','url(#gR)');
+    svg.appendChild(el);
+    return id;
+  }
+
+  function moveDot(id,sx,sy,pts){
+    if(!pts.length) return Promise.resolve();
+    const tl=anime.timeline({easing:'linear'});
+    let px=sx,py=sy;
+    for(const p of pts){
+      const d=Math.hypot(p.x-px,p.y-py);
+      tl.add({targets:`#${id}`,cx:p.x,cy:p.y,duration:Math.max(d*10,80)});
+      px=p.x;py=p.y;
+    }
+    return tl.finished;
+  }
+
+  /* fired is shared across ALL branches — each node dispatches only once */
+  async function trace(dotId,nodeId,fired){
+    if(fired.has(nodeId)){
+      /* convergence point — this node already fired, merge dot away */
+      await anime({targets:`#${dotId}`,opacity:0,duration:250}).finished;
+      document.getElementById(dotId)?.remove();
+      return;
+    }
+    fired.add(nodeId);
+    const nd=g.node(nodeId); if(!nd) return;
+    const out=g.outEdges(nodeId)||[];
+
+    if(!out.length){
+      await anime({targets:`#${dotId}`,opacity:0,duration:400}).finished;
+      document.getElementById(dotId)?.remove();
+      return;
+    }
+
+    /* fan-out: first edge reuses existing dot; additional edges spawn new dots */
+    await Promise.all(out.map(async(edge,i)=>{
+      const thisDot=i===0?dotId:mkDot(nd.x,nd.y,'0.85');
+      let edgePts=[];
+      try{edgePts=g.edge(edge).points??[];}catch(_){}
+      const dest=g.node(edge.w);
+      if(!dest){document.getElementById(thisDot)?.remove();return;}
+      await moveDot(thisDot,nd.x,nd.y,[...edgePts,{x:dest.x,y:dest.y}]);
+      await trace(thisDot,edge.w,fired);
+    }));
+  }
+
+  async function runLoop(){
+    document.querySelectorAll('[id^="tdot-"]').forEach(d=>d.remove());
+    dotN=0;
+    const fired=new Set(); /* shared token set — reset each loop */
+    await Promise.all(roots.map(async rootId=>{
+      const nd=g.node(rootId); if(!nd) return;
+      const id=mkDot(nd.x,nd.y,'0');
+      await anime({targets:`#${id}`,opacity:1,duration:300}).finished;
+      await trace(id,rootId,fired);
+    }));
+    setTimeout(runLoop,1400);
+  }
+
+  setTimeout(runLoop,1600);
+}
+
+/* ── Edge validator ────────────────────────────────────── */
+function validateEdges(){
+  const nodeIds=new Set(NODES.map(n=>n.id));
+  const inIds=new Set(EDGES.map(e=>e.to));
+  const outIds=new Set(EDGES.map(e=>e.from));
+
+  const ghostFrom=[...new Set(EDGES.filter(e=>!nodeIds.has(e.from)).map(e=>e.from))];
+  const ghostTo  =[...new Set(EDGES.filter(e=>!nodeIds.has(e.to)  ).map(e=>e.to))];
+  if(ghostFrom.length) console.error('Ghost edge FROM ids (no matching node):',ghostFrom);
+  if(ghostTo.length)   console.error('Ghost edge TO ids (no matching node):',ghostTo);
+
+  const noIn=NODES.filter(n=>!inIds.has(n.id)&&outIds.has(n.id));
+  if(noIn.length) console.warn('NO INCOMING edge (not a root):',noIn.map(n=>n.label));
+
+  const noOut=NODES.filter(n=>inIds.has(n.id)&&!outIds.has(n.id));
+  if(noOut.length) console.info('Leaf nodes (no outgoing — expected):',noOut.map(n=>n.label));
+
+  if(NODES.length){
+    const adj={};
+    NODES.forEach(n=>adj[n.id]=new Set());
+    EDGES.forEach(e=>{adj[e.from]?.add(e.to);adj[e.to]?.add(e.from);});
+    const seen=new Set();
+    const q=[NODES[0].id];
+    while(q.length){const c=q.shift();if(seen.has(c))continue;seen.add(c);adj[c].forEach(nb=>q.push(nb));}
+    const islands=NODES.filter(n=>!seen.has(n.id)).map(n=>n.label);
+    if(islands.length) console.warn('Disconnected islands (not reachable from root):',islands);
+  }
+}
+
+/* ── Footer layers ─────────────────────────────────────── */
+function renderFooterSections(){
+  const el=document.getElementById('footer-layers-chips');
+  if(!el||!SECTIONS.length){document.getElementById('footer-layers')?.style.setProperty('display','none');return;}
+  el.innerHTML=SECTIONS.map(s=>
+    `<div class="fl-chip">${s.label}<span class="fl-chip-count">${s.nodes.length}</span></div>`
+  ).join('');
+}
+
+/* ── Entrance animations ───────────────────────────────── */
+function animateEntrance(){
+  if(typeof anime==='undefined'){
+    document.querySelectorAll('.nd,.conn,.sp').forEach(e=>{e.style.opacity=1;});
+    return;
+  }
+  anime({targets:'.sp',   opacity:[0,1], translateY:[3,0],  delay:anime.stagger(30,{start:200}), easing:'easeOutQuad',  duration:320});
+  anime({targets:'.nd',   opacity:[0,1], translateY:[10,0], delay:anime.stagger(40,{start:80}),  easing:'easeOutExpo',  duration:560});
+  anime({targets:'.conn', opacity:[0,1],                    delay:anime.stagger(20,{start:600}), easing:'easeOutQuad',  duration:200});
+}
+
+/* ── Boot ──────────────────────────────────────────────── */
+window.onload=()=>{
+  renderKPIs();
+  const g=computeLayout();
+  renderDiagram(g);
+  renderStats();
+  animateEntrance();
+  startDot(g);
+  document.getElementById('sb-close').onclick=closeSidebar;
+  document.addEventListener('click',e=>{
+    const sb=document.getElementById('sidebar');
+    if(!sb.classList.contains('sb-open')) return;
+    if(sb.contains(e.target)) return;
+    if(e.target.closest('.nd')) return;
+    closeSidebar();
+  });
+  validateEdges();
+};
+</script>
+</body>
+</html>

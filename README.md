@@ -7,11 +7,15 @@ Designed for systems you want to **study and understand deeply**, not just prese
 ## Install
 
 ```bash
-mkdir -p ~/.claude/commands && \
+mkdir -p ~/.claude/skills/html-system
 curl -sf https://raw.githubusercontent.com/mitchelfletcher11/html-system/main/SKILL.md \
-     -o ~/.claude/commands/html-system.md
+     -o ~/.claude/skills/html-system/SKILL.md
+curl -sf https://raw.githubusercontent.com/mitchelfletcher11/html-system/main/template.html \
+     -o ~/.claude/skills/html-system/template.html
 ```
 
+`template.html` is the build scaffold the skill starts from — keep it next to
+`SKILL.md`. No credentials or other setup required (see [SETUP.md](SETUP.md)).
 Restart Claude Code, then run `/html-system` to verify.
 
 ## Usage
@@ -81,17 +85,4 @@ Abbreviations are always expanded on first use: `API (Application Programming In
 
 ## Release notes
 
-### v1.1 — 2026-06-01
-- Increased default row gap from 170px to **300px** for verbose nodes
-- Added "verbose node" content height estimate (190–230px) alongside the original short-description estimate (118px)
-- Clarified that the abbreviation-expansion rule produces verbose descriptions by default — 300px gap should be the standard
-- Updated branch row minimum from 110px to 150px for verbose descriptions
-- Analogy line color updated from `#4a4a4a` to `#777` for legibility on dark backgrounds
-
-### v1.0 — initial release
-- Full SVG pipeline diagram with animated traveling dot
-- Semantic three-color system (purple / gold / green)
-- Safe foreignObject height calculation with column-pair overlap detection
-- Branch animation with parallel split dots
-- SVG text overlap detector embedded in every output
-- Stats grid, header KPI chips, legend, footer
+See **[CHANGELOG.md](CHANGELOG.md)** for the full version history.
